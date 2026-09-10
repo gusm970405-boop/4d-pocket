@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>造数台</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+SC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<style>
+  :root{
+    --bg:#f2f3f6;
+    --surface:#ffffff;
+    --surface-2:#eaecf1;
+    --border:#dadfe6;
+    --text:#1a1d24;
+    --text-dim:#5c6270;
+    --accent:#5850d6;
+    --accent-ink:#ffffff;
+    --accent-soft:#eceafc;
+    --success:#188a5e;
+    --success-soft:#e2f5ec;
+    --danger:#c23a34;
+    --danger-soft:#fbe8e7;
+    --warning:#a8701e;
+    --warning-soft:#fbeedd;
+    --focus:#5850d6;
+    --term-bg:#14161c;
+    --term-text:#dfe3ea;
+    --term-dim:#7d8494;
+    --term-ok:#4fd39a;
+    --term-bad:#ff7a70;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#101217;
+      --surface:#181b22;
+      --surface-2:#20242c;
+      --border:#2c313b;
+      --text:#eef0f4;
+      --text-dim:#99a0ad;
+      --accent:#948bf7;
+      --accent-ink:#12121a;
+      --accent-soft:#232047;
+      --success:#42c98d;
+      --success-soft:#123527;
+      --danger:#ff7a70;
+      --danger-soft:#3a1c1c;
+      --warning:#e2ab5c;
+      --warning-soft:#3a2c14;
+      --focus:#948bf7;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101217;
+    --surface:#181b22;
+    --surface-2:#20242c;
+    --border:#2c313b;
+    --text:#eef0f4;
+    --text-dim:#99a0ad;
+    --accent:#948bf7;
+    --accent-ink:#12121a;
+    --accent-soft:#232047;
+    --success:#42c98d;
+    --success-soft:#123527;
+    --danger:#ff7a70;
+    --danger-soft:#3a1c1c;
+    --warning:#e2ab5c;
+    --warning-soft:#3a2c14;
+    --focus:#948bf7;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans","IBM Plex Sans SC",-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.55;
+  }
+  .app{
+    display:grid;
+    grid-template-columns:232px 1fr;
+    min-height:100vh;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    padding:20px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:2px 8px 10px;
+  }
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(155deg,var(--accent),#8f7ff5);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent-ink);font-weight:700;font-size:14px;
+    font-family:"IBM Plex Mono",monospace;
+    flex-shrink:0;
+  }
+  .brand-text h1{
+    font-size:15px;font-weight:700;margin:0;letter-spacing:.01em;
+  }
+  .brand-text p{
+    margin:0;font-size:11px;color:var(--text-dim);
+  }
+  nav{display:flex;flex-direction:column;gap:3px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 10px;border-radius:8px;
+    color:var(--text-dim);font-size:13.5px;font-weight:500;
+    cursor:pointer;border:1px solid transparent;
+    background:none;text-align:left;width:100%;
+    transition:background .12s ease,color .12s ease;
+  }
+  .nav-item:hover{background:var(--surface-2);color:var(--text);}
+  .nav-item.active{
+    background:var(--accent-soft);color:var(--accent);
+    font-weight:600;
+  }
+  .nav-icon{
+    width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  }
+  .nav-icon svg{width:100%;height:100%;}
+  .sidebar-foot{
+    margin-top:auto;
+    border-top:1px solid var(--border);
+    padding-top:12px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .stat-row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:var(--text-dim);}
+  .stat-row b{
+    font-family:"IBM Plex Mono",monospace;color:var(--text);font-size:13px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .theme-toggle{
+    display:flex;gap:4px;background:var(--surface-2);border-radius:8px;padding:3px;
+  }
+  .theme-toggle button{
+    flex:1;border:none;background:none;color:var(--text-dim);font-size:11px;
+    padding:6px 0;border-radius:6px;cursor:pointer;font-weight:600;
+  }
+  .theme-toggle button.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+
+  /* ---------- main ---------- */
+  main{padding:28px 34px 60px;max-width:1180px;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .view-head{margin-bottom:22px;}
+  .eyebrow{
+    text-transform:uppercase;letter-spacing:.09em;font-size:11px;font-weight:600;
+    color:var(--accent);margin:0 0 6px;
+  }
+  .view-head h2{margin:0 0 6px;font-size:22px;font-weight:700;text-wrap:balance;}
+  .view-head p{margin:0;color:var(--text-dim);max-width:62ch;}
+
+  .panel-grid{
+    display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;
+  }
+  @media (max-width:920px){ .panel-grid{grid-template-columns:1fr;} .app{grid-template-columns:1fr;} .sidebar{position:static;height:auto;} }
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:18px 18px 20px;
+  }
+  .card h3{margin:0 0 4px;font-size:14px;font-weight:600;}
+  .card .sub{margin:0 0 14px;font-size:12px;color:var(--text-dim);}
+
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+  .field label{font-size:12px;font-weight:600;color:var(--text-dim);}
+  .field .hint{font-size:11px;color:var(--text-dim);font-weight:400;}
+  input[type=text],input[type=number],input[type=password],select,textarea{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:7px;
+    padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;width:100%;
+  }
+  textarea{font-family:"IBM Plex Mono",monospace;font-size:12.5px;resize:vertical;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:1px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;}
+  .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;}
+  .chk input{width:14px;height:14px;accent-color:var(--accent);}
+
+  button.btn{
+    background:var(--accent);color:var(--accent-ink);border:none;border-radius:7px;
+    padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  button.btn:hover{filter:brightness(1.06);}
+  button.btn.secondary{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+  button.btn.ghost{background:none;color:var(--accent);border:1px solid var(--accent-soft);padding:7px 12px;font-size:12px;}
+  button.btn.small{padding:6px 11px;font-size:12px;}
+  button.btn.danger-o{background:none;color:var(--danger);border:1px solid var(--danger-soft);}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--text-dim);border-bottom:1px solid var(--border);padding:0 10px 8px;font-weight:600;
+  }
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--border);font-family:"IBM Plex Mono",monospace;font-size:12px;}
+  tbody tr:last-child td{border-bottom:none;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;}
+  .table-wrap table{min-width:520px;}
+
+  .results-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .results-head h3{margin:0;font-size:14px;}
+  .count-chip{
+    background:var(--surface-2);color:var(--text-dim);font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:99px;font-family:"IBM Plex Mono",monospace;
+  }
+  .empty-state{
+    border:1px dashed var(--border);border-radius:10px;padding:30px 16px;text-align:center;color:var(--text-dim);font-size:12.5px;
+  }
+
+  .kv-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .map-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .kv-row input{margin:0;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);
+    color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+
+  .pill{
+    display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+    padding:3px 9px;border-radius:99px;
+  }
+  .pill.ok{background:var(--success-soft);color:var(--success);}
+  .pill.bad{background:var(--danger-soft);color:var(--danger);}
+  .pill.warn{background:var(--warning-soft);color:var(--warning);}
+  .pill.pending{background:var(--surface-2);color:var(--text-dim);}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+  .log-panel{
+    background:var(--term-bg);color:var(--term-text);border-radius:10px;
+    font-family:"IBM Plex Mono",monospace;font-size:12px;padding:12px 14px;
+    max-height:340px;overflow-y:auto;
+  }
+  .log-line{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:baseline;}
+  .log-line:last-child{border-bottom:none;}
+  .log-idx{color:var(--term-dim);width:28px;flex-shrink:0;}
+  .log-status.ok{color:var(--term-ok);font-weight:600;}
+  .log-status.bad{color:var(--term-bad);font-weight:600;}
+  .log-detail{color:var(--term-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .log-time{color:var(--term-dim);}
+  .log-empty{color:var(--term-dim);}
+
+  .tool-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .tool-tab{
+    padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface);
+    color:var(--text-dim);font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .tool-tab.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+  .subview{display:none;}
+  .subview.active{display:block;}
+
+  .out-box{
+    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+    padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+    white-space:pre-wrap;word-break:break-all;min-height:44px;
+  }
+  .out-box.error{color:var(--danger);}
+  .field-note{font-size:11px;color:var(--text-dim);margin-top:6px;}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:var(--text);color:var(--bg);padding:9px 18px;border-radius:99px;font-size:12.5px;font-weight:600;
+    opacity:0;pointer-events:none;transition:opacity .18s ease, transform .18s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (prefers-reduced-motion:reduce){ *{transition:none!important;} }
+</style>
+
+
+
+<style>
+  #gateOverlay{
+    position:fixed;inset:0;z-index:999;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  #gateCard{
+    background:var(--surface);border:1px solid var(--border);border-radius:14px;
+    padding:32px 30px;width:100%;max-width:340px;text-align:center;
+  }
+  #gateCard .brand-mark{margin:0 auto 14px;}
+  #gateCard h2{margin:0 0 6px;font-size:17px;font-weight:700;}
+  #gateCard p{margin:0 0 18px;font-size:12.5px;color:var(--text-dim);}
+  #gateCard input{margin-bottom:12px;text-align:center;letter-spacing:.05em;}
+  #gateCard button{width:100%;}
+  #gateError{color:var(--danger);font-size:12px;min-height:16px;margin-top:8px;}
+  .app{display:none;}
+  .app.unlocked{display:grid;}
+</style>
+
+</head>
+<body>
+
+<div id="gateOverlay">
+  <div id="gateCard">
+    <div class="brand-mark" style="width:40px;height:40px;font-size:18px;">造</div>
+    <h2>造数台</h2>
+    <p>内部工具，请输入访问口令</p>
+    <input type="password" id="gatePass" placeholder="访问口令" autocomplete="off">
+    <button class="btn" id="gateBtn">进入</button>
+    <div id="gateError"></div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">造</div>
+      <div class="brand-text">
+        <h1>造数台</h1>
+        <p>测试数据工具箱</p>
+      </div>
+    </div>
+    <nav id="nav">
+      <button class="nav-item active" data-view="basic">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.9 3.1-6.5 7-6.5s7 2.6 7 6.5"/></svg></span>
+        基础数据生成
+      </button>
+      <button class="nav-item" data-view="batch">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="4" width="17" height="5" rx="1.3"/><rect x="3.5" y="10.5" width="17" height="5" rx="1.3"/><rect x="3.5" y="17" width="17" height="3.3" rx="1"/></svg></span>
+        批量账号数据
+      </button>
+      <button class="nav-item" data-view="api">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5 3 12l5 7M16 5l5 7-5 7M13.5 4l-3 16"/></svg></span>
+        接口造数
+      </button>
+      <button class="nav-item" data-view="convert">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 20l-4-4 4-4"/></svg></span>
+        格式转换/加解密
+      </button>
+      <button class="nav-item" data-view="db">
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8"/><path d="M4.5 5.5v6.5c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V5.5M4.5 12v6.5c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V12"/></svg></span>
+        数据库操作
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="stat-row">本次已生成 <b id="statGen">0</b> 条</div>
+      <div class="stat-row">接口调用 <b id="statApi">0</b> 次</div>
+      <div class="theme-toggle" id="themeToggle">
+        <button data-theme="system" class="active">跟随系统</button>
+        <button data-theme="light">浅色</button>
+        <button data-theme="dark">深色</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ============ 1. 基础数据生成 ============ -->
+    <section class="view active" id="view-basic">
+      <div class="view-head">
+        <p class="eyebrow">Random Data</p>
+        <h2>基础数据生成</h2>
+        <p>勾选需要的字段，一键生成常用的中文测试数据 —— 姓名、手机号、身份证号（含合法校验位）、邮箱、地址、银行卡号等。</p>
+      </div>
+      <div class="panel-grid">
+        <div class="card">
+          <h3>生成设置</h3>
+          <p class="sub">选择字段与生成条数</p>
+          <div class="field">
+            <label>生成条数</label>
+            <input type="number" id="basicCount" value="8" min="1" max="200">
+          </div>
+          <div class="field">
+            <label>字段</label>
+            <div class="checks" id="basicFields"></div>
+          </div>
+          <div class="field">
+            <label>身份证年龄范围（周岁）</label>
+            <div class="row2">
+              <input type="number" id="idAgeMin" value="18" min="0" max="99">
+              <input type="number" id="idAgeMax" value="55" min="0" max="99">
+            </div>
+          </div>
+          <button class="btn" id="basicGenBtn" style="width:100%;margin-top:6px;">生成数据</button>
+        </div>
+        <div>
+          <div class="results-head">
+            <h3>结果</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="count-chip" id="basicCountChip">0 条</span>
+              <button class="btn ghost small" id="basicCopyCsv">复制为 CSV</button>
+              <button class="btn ghost small" id="basicCopyJson">复制为 JSON</button>
+            </div>
+          </div>
+          <div id="basicResultWrap"><div class="empty-state">还没有数据，设置字段后点击「生成数据」</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2. 批量账号数据 ============ -->
+    <section class="view" id="view-batch">
+      <div class="view-head">
+        <p class="eyebrow">Batch Accounts</p>
+        <h2>批量账号 / 用户数据</h2>
+        <p>按规则批量生成注册用的账号数据：用户名、密码、手机、邮箱与注册时间，适合灌库或压测前置数据准备。</p>
+      </div>
+      <div class="panel-grid">
+        <div class="card">
+          <h3>生成规则</h3>
+          <p class="sub">定义账号命名与密码规则</p>
+          <div class="field">
+            <label>数量</label>
+            <input type="number" id="batchCount" value="20" min="1" max="500">
+          </div>
+          <div class="field">
+            <label>用户名前缀</label>
+            <input type="text" id="batchPrefix" value="qa_test">
+            <span class="hint">生成形如 qa_test_00001</span>
+          </div>
+          <div class="field">
+            <label>起始序号</label>
+            <input type="number" id="batchStart" value="1" min="0">
+          </div>
+          <div class="field">
+            <label>密码长度</label>
+            <input type="number" id="batchPwdLen" value="10" min="6" max="32">
+          </div>
+          <div class="field">
+            <div class="chk"><input type="checkbox" id="batchPwdSymbol" checked><label for="batchPwdSymbol">密码包含符号</label></div>
+          </div>
+          <div class="field">
+            <label>包含字段</label>
+            <div class="checks" id="batchFields"></div>
+          </div>
+          <button class="btn" id="batchGenBtn" style="width:100%;margin-top:6px;">生成数据</button>
+        </div>
+        <div>
+          <div class="results-head">
+            <h3>结果</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span class="count-chip" id="batchCountChip">0 条</span>
+              <button class="btn ghost small" id="batchCopyCsv">复制为 CSV</button>
+              <button class="btn ghost small" id="batchCopyJson">复制为 JSON</button>
+            </div>
+          </div>
+          <div id="batchResultWrap"><div class="empty-state">设置规则后点击「生成数据」</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. 接口造数 ============ -->
+    <section class="view" id="view-api">
+      <div class="view-head">
+        <p class="eyebrow">API Data Injection</p>
+        <h2>接口造数</h2>
+        <p>配置接口地址与请求体模板，用 <span class="mono">{{字段名}}</span> 引用随机数据，循环调用接口批量写库。默认从浏览器直接发出，若目标接口不允许跨域（CORS），可勾选下方「通过后端代理转发」。</p>
+      </div>
+      <div class="panel-grid">
+        <div class="card">
+          <h3>请求配置</h3>
+          <p class="sub">支持 GET / POST / PUT / DELETE</p>
+          <div class="field">
+            <div class="chk"><input type="checkbox" id="apiUseProxy"><label for="apiUseProxy">通过后端代理转发（解决跨域，需先在「数据库操作」页配置后端地址）</label></div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>方法</label>
+              <select id="apiMethod">
+                <option>GET</option><option selected>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>循环次数</label>
+              <input type="number" id="apiLoop" value="5" min="1" max="200">
+            </div>
+          </div>
+          <div class="field">
+            <label>接口地址 URL</label>
+            <input type="text" id="apiUrl" placeholder="https://api.example.com/users" class="mono">
+          </div>
+          <div class="field">
+            <label>请求头</label>
+            <div id="apiHeaders"></div>
+            <button class="btn secondary small" id="apiAddHeader" type="button">+ 添加请求头</button>
+          </div>
+          <div class="field">
+            <label>请求体模板（JSON）</label>
+            <textarea id="apiBody" rows="6">{
+  "name": "{{name}}",
+  "phone": "{{phone}}",
+  "email": "{{email}}"
+}</textarea>
+            <span class="field-note">可用占位符：{{name}} {{phone}} {{idcard}} {{email}} {{address}} {{bankcard}} {{company}} {{uuid}} {{timestamp}} {{index}}</span>
+          </div>
+          <div class="field">
+            <label>请求间隔（毫秒）</label>
+            <input type="number" id="apiInterval" value="300" min="0" max="10000">
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="apiSendBtn">开始发送</button>
+            <button class="btn secondary" id="apiStopBtn">停止</button>
+          </div>
+          <div class="btn-row" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+            <input type="text" id="apiPresetName" placeholder="预设名称" style="flex:1;">
+            <button class="btn secondary small" id="apiSavePreset">保存预设</button>
+          </div>
+          <div class="field" style="margin-top:8px;">
+            <select id="apiPresetSelect"><option value="">— 我的预设 —</option></select>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost small" id="apiLoadPreset">加载</button>
+            <button class="btn danger-o small" id="apiDeletePreset">删除</button>
+          </div>
+        </div>
+        <div>
+          <div class="results-head">
+            <h3>调用日志</h3>
+            <span class="count-chip" id="apiLogCount">0 次请求</span>
+          </div>
+          <div class="log-panel" id="apiLog"><div class="log-empty">日志将在这里显示…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 4. 格式转换/加解密 ============ -->
+    <section class="view" id="view-convert">
+      <div class="view-head">
+        <p class="eyebrow">Convert &amp; Cipher</p>
+        <h2>格式转换 / 加解密</h2>
+        <p>JSON 格式化、Base64、URL 编解码、时间戳互转、哈希摘要与 AES 加解密，覆盖联调时最常用的数据处理动作。</p>
+      </div>
+
+      <div class="tool-tabs" id="convTabs">
+        <button class="tool-tab active" data-sub="json">JSON 格式化</button>
+        <button class="tool-tab" data-sub="base64">Base64</button>
+        <button class="tool-tab" data-sub="url">URL 编解码</button>
+        <button class="tool-tab" data-sub="time">时间戳互转</button>
+        <button class="tool-tab" data-sub="hash">哈希摘要</button>
+        <button class="tool-tab" data-sub="aes">AES 加解密</button>
+        <button class="tool-tab" data-sub="uuid">UUID</button>
+      </div>
+
+      <div class="card subview active" id="sub-json">
+        <div class="field"><label>输入 JSON</label><textarea id="jsonIn" rows="7">{"id":1,"name":"张三","tags":["vip","test"]}</textarea></div>
+        <div class="btn-row"><button class="btn small" id="jsonFormat">格式化</button><button class="btn secondary small" id="jsonMinify">压缩</button><button class="btn ghost small" id="jsonCopy">复制结果</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="jsonOut">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-base64">
+        <div class="field"><label>输入内容</label><textarea id="b64In" rows="5">造数台 test data 123</textarea></div>
+        <div class="btn-row"><button class="btn small" id="b64Encode">编码</button><button class="btn secondary small" id="b64Decode">解码</button><button class="btn ghost small" id="b64Copy">复制结果</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="b64Out">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-url">
+        <div class="field"><label>输入内容</label><textarea id="urlIn" rows="5">https://example.com/search?q=测试 数据&page=1</textarea></div>
+        <div class="btn-row"><button class="btn small" id="urlEncode">编码</button><button class="btn secondary small" id="urlDecode">解码</button><button class="btn ghost small" id="urlCopy">复制结果</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="urlOut">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-time">
+        <div class="row2">
+          <div class="field">
+            <label>时间戳 → 日期</label>
+            <div class="row2">
+              <input type="text" id="tsIn" placeholder="1700000000" class="mono">
+              <select id="tsUnit"><option value="s">秒</option><option value="ms">毫秒</option></select>
+            </div>
+            <button class="btn secondary small" id="tsToDate" style="margin-top:8px;">转换</button>
+            <div class="out-box" id="tsDateOut" style="margin-top:8px;">—</div>
+          </div>
+          <div class="field">
+            <label>日期 → 时间戳</label>
+            <input type="text" id="dateIn" placeholder="2026-09-10 12:00:00" class="mono">
+            <button class="btn secondary small" id="dateToTs" style="margin-top:8px;">转换</button>
+            <div class="out-box" id="dateTsOut" style="margin-top:8px;">—</div>
+          </div>
+        </div>
+        <button class="btn ghost small" id="tsNow" style="margin-top:14px;">取当前时间</button>
+      </div>
+
+      <div class="card subview" id="sub-hash">
+        <div class="field"><label>输入内容</label><textarea id="hashIn" rows="4">test123</textarea></div>
+        <div class="btn-row"><button class="btn small" id="hashMd5">MD5</button><button class="btn small" id="hashSha1">SHA1</button><button class="btn small" id="hashSha256">SHA256</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="hashOut">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-aes">
+        <div class="field"><label>密钥（任意字符串）</label><input type="text" id="aesKey" value="qa-secret-key" class="mono"></div>
+        <div class="field"><label>明文 / 密文</label><textarea id="aesIn" rows="4">hello qa</textarea></div>
+        <div class="btn-row"><button class="btn small" id="aesEnc">加密</button><button class="btn secondary small" id="aesDec">解密</button><button class="btn ghost small" id="aesCopy">复制结果</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="aesOut">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-uuid">
+        <div class="field"><label>生成数量</label><input type="number" id="uuidCount" value="5" min="1" max="100"></div>
+        <button class="btn small" id="uuidGen">生成 UUID</button>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="uuidOut">—</div></div>
+      </div>
+
+    </section>
+
+    <!-- ============ 5. 数据库操作 ============ -->
+    <section class="view" id="view-db">
+      <div class="view-head">
+        <p class="eyebrow">Database &amp; Backend Proxy</p>
+        <h2>数据库操作</h2>
+        <p>浏览器无法直接连接数据库，需要一个常驻的后端代理服务持有连接信息并对外提供接口。这里配置该后端服务的地址后，就能直接执行 SQL、批量插入数据，也能给「接口造数」提供跨域转发能力。</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3>后端服务配置</h3>
+        <p class="sub">部署方式见随工具箱一起提供的 toolbox-backend 后端代码</p>
+        <div class="row2">
+          <div class="field">
+            <label>后端地址</label>
+            <input type="text" id="dbBaseUrl" placeholder="http://192.168.1.10:8787" class="mono">
+          </div>
+          <div class="field">
+            <label>API Token</label>
+            <input type="password" id="dbToken" placeholder="与后端 .env 中 API_TOKEN 一致" class="mono">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn secondary small" id="dbSaveConfig">保存配置</button>
+          <button class="btn ghost small" id="dbTestConn">测试连接</button>
+          <span class="pill pending" id="dbConnStatus">未测试</span>
+        </div>
+      </div>
+
+      <div class="tool-tabs" id="dbTabs">
+        <button class="tool-tab active" data-sub="sql">执行 SQL</button>
+        <button class="tool-tab" data-sub="insert">批量插入</button>
+      </div>
+
+      <div class="card subview active" id="sub-sql">
+        <div class="field">
+          <label>SQL 语句</label>
+          <textarea id="sqlIn" rows="5">SELECT * FROM users ORDER BY id DESC LIMIT 10</textarea>
+        </div>
+        <div class="field">
+          <label>参数（JSON 数组，对应 SQL 中的 $1 $2 ...）</label>
+          <input type="text" id="sqlParams" placeholder="[]" class="mono" value="[]">
+        </div>
+        <div class="btn-row"><button class="btn small" id="sqlRun">执行</button><button class="btn ghost small" id="sqlCopy">复制结果</button></div>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="sqlOut">—</div></div>
+      </div>
+
+      <div class="card subview" id="sub-insert">
+        <p class="sub">选择数据表与字段映射，用随机数据批量执行 INSERT（走 /api/insert，参数化写入，不拼接原始 SQL）</p>
+        <div class="row2">
+          <div class="field"><label>表名</label><input type="text" id="insTable" placeholder="users" class="mono"></div>
+          <div class="field"><label>插入条数</label><input type="number" id="insCount" value="10" min="1" max="500"></div>
+        </div>
+        <div class="field">
+          <label>字段映射（数据库列名 → 生成的数据字段）</label>
+          <div id="insMapRows"></div>
+          <button class="btn secondary small" id="insAddMap" type="button">+ 添加字段映射</button>
+        </div>
+        <button class="btn" id="insRun">批量插入</button>
+        <div class="field" style="margin-top:12px;"><label>结果</label><div class="out-box" id="insOut">—</div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- utilities ---------------- */
+  const $ = (id)=>document.getElementById(id);
+  function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+  function pick(arr){return arr[randInt(0,arr.length-1)];}
+  function pad(n,len){return String(n).padStart(len,'0');}
+
+  function toast(msg){
+    const t=$('toast'); t.textContent=msg; t.classList.add('show');
+    clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove('show'),1600);
+  }
+  async function copyText(text){
+    try{ await navigator.clipboard.writeText(text); toast('已复制到剪贴板'); }
+    catch(e){ toast('复制失败，请手动选择复制'); }
+  }
+
+  /* ---------------- stats (per-viewer, localStorage) ---------------- */
+  let stats={gen:0,api:0};
+  try{ const s=JSON.parse(localStorage.getItem('toolbox_stats')||'{}'); stats.gen=s.gen||0; stats.api=s.api||0; }catch(e){}
+  function saveStats(){ try{ localStorage.setItem('toolbox_stats', JSON.stringify(stats)); }catch(e){} }
+  function bumpGen(n){ stats.gen+=n; $('statGen').textContent=stats.gen; saveStats(); }
+  function bumpApi(n){ stats.api+=n; $('statApi').textContent=stats.api; saveStats(); }
+  $('statGen').textContent=stats.gen; $('statApi').textContent=stats.api;
+
+  /* ---------------- theme ---------------- */
+  const root=document.documentElement;
+  let savedTheme='system';
+  try{ savedTheme=localStorage.getItem('toolbox_theme')||'system'; }catch(e){}
+  function applyTheme(t){
+    if(t==='system'){ root.removeAttribute('data-theme'); } else { root.setAttribute('data-theme',t); }
+    document.querySelectorAll('#themeToggle button').forEach(b=>b.classList.toggle('active', b.dataset.theme===t));
+    try{ localStorage.setItem('toolbox_theme', t); }catch(e){}
+  }
+  applyTheme(savedTheme);
+  document.querySelectorAll('#themeToggle button').forEach(b=>{
+    b.addEventListener('click', ()=>applyTheme(b.dataset.theme));
+  });
+
+  /* ---------------- nav ---------------- */
+  document.querySelectorAll('.nav-item').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      $('view-'+btn.dataset.view).classList.add('active');
+    });
+  });
+
+  /* ================= data pools ================= */
+  const SURNAMES=['李','王','张','刘','陈','杨','赵','黄','周','吴','徐','孙','胡','朱','高','林','何','郭','马','罗','梁','宋','郑','谢','韩','唐','冯','于','董','萧','程','曹','袁','邓','许','傅','沈','曾','彭'];
+  const GIVEN=['伟','芳','娜','秀英','敏','静','丽','强','磊','军','洋','勇','艳','杰','娟','涛','明','超','秀兰','霞','平','刚','桂英','宇','萍','鹏','红','燕','俊','梅','雪','鑫','宁','浩','婷','琪','昊','雨桐','子涵','思远'];
+  const PHONE_PREFIX=['134','135','136','137','138','139','150','151','152','157','158','159','182','183','184','187','188','178','198','199','130','131','132','155','156','166','185','186','133','153','173','177','180','181','189'];
+  const EMAIL_DOMAINS=['qq.com','163.com','126.com','gmail.com','outlook.com','sina.com','foxmail.com'];
+  const REGIONS=[
+    {name:'北京市朝阳区',code:'110105'},{name:'上海市浦东新区',code:'310115'},{name:'广东省深圳市南山区',code:'440305'},
+    {name:'广东省广州市天河区',code:'440106'},{name:'四川省成都市武侯区',code:'510107'},{name:'浙江省杭州市西湖区',code:'330106'},
+    {name:'江苏省南京市鼓楼区',code:'320106'},{name:'湖北省武汉市洪山区',code:'420111'},{name:'陕西省西安市雁塔区',code:'610113'},
+    {name:'重庆市渝中区',code:'500103'},{name:'福建省厦门市思明区',code:'350203'},{name:'山东省青岛市市南区',code:'370202'},
+    {name:'辽宁省沈阳市和平区',code:'210102'},{name:'湖南省长沙市岳麓区',code:'430104'},{name:'河南省郑州市金水区',code:'410105'}
+  ];
+  const STREETS=['人民路','建设大街','解放中路','长安街','科技园路','创业大道','振兴街','和平路','文化路','幸福大街'];
+  const BANK_BINS=[{name:'招商银行',bin:'621226'},{name:'工商银行',bin:'622202'},{name:'建设银行',bin:'621700'},{name:'农业银行',bin:'622848'},{name:'中国银行',bin:'621661'},{name:'交通银行',bin:'622260'}];
+  const COMPANY_A=['杭州','鼎盛','远大','恒信','智联','云图','聚合','星辰','蓝海','拓维'];
+  const COMPANY_B=['科技','网络','信息技术','贸易','实业','软件','数据'];
+  const COMPANY_C=['有限公司','股份有限公司'];
+
+  function genName(){ return pick(SURNAMES)+pick(GIVEN); }
+  function genPhone(){ return pick(PHONE_PREFIX)+pad(randInt(0,99999999),8); }
+  function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+  function genIdCard(ageMin,ageMax){
+    const region=pick(REGIONS);
+    const now=new Date();
+    const age=randInt(ageMin,ageMax);
+    const year=now.getFullYear()-age;
+    const month=randInt(1,12);
+    const day=randInt(1,daysInMonth(year,month));
+    const birth=String(year)+pad(month,2)+pad(day,2);
+    const seq=pad(randInt(0,999),3);
+    const base17=region.code+birth+seq;
+    const weights=[7,9,10,5,8,4,2,1,6,3,7,9,10,5,8,4,2,1];
+    const checkMap=['1','0','X','9','8','7','6','5','4','3','2'];
+    let sum=0;
+    for(let i=0;i<17;i++){ sum+=parseInt(base17[i],10)*weights[i]; }
+    const check=checkMap[sum%11];
+    const gender=(parseInt(seq,10)%2===0)?'女':'男';
+    return {id:base17+check, region:region.name, birth:year+'-'+pad(month,2)+'-'+pad(day,2), gender, age};
+  }
+  function genEmail(){
+    const pool='abcdefghijklmnopqrstuvwxyz';
+    let s=''; for(let i=0;i<randInt(5,9);i++) s+=pool[randInt(0,25)];
+    return s+randInt(1,999)+'@'+pick(EMAIL_DOMAINS);
+  }
+  function genAddress(){
+    const r=pick(REGIONS);
+    return r.name+pick(STREETS)+randInt(1,300)+'号'+randInt(1,20)+'栋'+randInt(1,25)+'0'+randInt(1,9)+'室';
+  }
+  function luhnCheckDigit(numStr){
+    let sum=0, alt=true;
+    for(let i=numStr.length-1;i>=0;i--){
+      let d=parseInt(numStr[i],10);
+      if(alt){ d*=2; if(d>9) d-=9; }
+      sum+=d; alt=!alt;
+    }
+    return (10-(sum%10))%10;
+  }
+  function genBankCard(){
+    const bank=pick(BANK_BINS);
+    let body=bank.bin;
+    for(let i=0;i<9;i++) body+=randInt(0,9);
+    const check=luhnCheckDigit(body+'0');
+    return {number:body+check, bank:bank.name};
+  }
+  function genCompany(){ return pick(COMPANY_A)+pick(COMPANY_B)+pick(COMPANY_C); }
+  function genUUID(){
+    if(crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+      const r=Math.random()*16|0, v=c==='x'?r:(r&0x3|0x8); return v.toString(16);
+    });
+  }
+  function genTimestamp(){ return Math.floor(Date.now()/1000 - randInt(0,3600*24*30)); }
+
+  function buildRow(fieldsWanted, ageMin, ageMax, index){
+    const idc=genIdCard(ageMin==null?18:ageMin, ageMax==null?55:ageMax);
+    const nm=genName();
+    const row={
+      index: index,
+      name: nm,
+      phone: genPhone(),
+      idcard: idc.id,
+      gender: idc.gender,
+      age: idc.age,
+      birth: idc.birth,
+      email: genEmail(),
+      address: genAddress(),
+      bankcard: genBankCard().number,
+      company: genCompany(),
+      uuid: genUUID(),
+      timestamp: genTimestamp()
+    };
+    if(!fieldsWanted) return row;
+    const out={};
+    fieldsWanted.forEach(f=>{ out[f]=row[f]; });
+    return out;
+  }
+
+  const FIELD_LABELS={
+    name:'姓名', phone:'手机号', idcard:'身份证号', gender:'性别', age:'年龄', birth:'出生日期',
+    email:'邮箱', address:'地址', bankcard:'银行卡号', company:'公司名称', uuid:'UUID', timestamp:'时间戳', index:'序号'
+  };
+
+  function toCSV(rows){
+    if(!rows.length) return '';
+    const cols=Object.keys(rows[0]);
+    const lines=[cols.map(c=>FIELD_LABELS[c]||c).join(',')];
+    rows.forEach(r=>{ lines.push(cols.map(c=>{
+      let v=String(r[c]==null?'':r[c]);
+      if(v.includes(',')||v.includes('"')){ v='"'+v.replace(/"/g,'""')+'"'; }
+      return v;
+    }).join(',')); });
+    return lines.join('\n');
+  }
+
+  function renderTable(rows, wrapId){
+    const wrap=$(wrapId);
+    if(!rows.length){ wrap.innerHTML='<div class="empty-state">还没有数据</div>'; return; }
+    const cols=Object.keys(rows[0]);
+    let html='<div class="table-wrap"><table><thead><tr>';
+    cols.forEach(c=>html+='<th>'+(FIELD_LABELS[c]||c)+'</th>');
+    html+='</tr></thead><tbody>';
+    rows.forEach(r=>{
+      html+='<tr>'+cols.map(c=>'<td>'+(r[c]==null?'':r[c])+'</td>').join('')+'</tr>';
+    });
+    html+='</tbody></table></div>';
+    wrap.innerHTML=html;
+  }
+
+  /* ================= 1. basic generator ================= */
+  const BASIC_FIELD_ORDER=['name','phone','idcard','gender','age','email','address','bankcard','company','uuid'];
+  const basicFieldsBox=$('basicFields');
+  BASIC_FIELD_ORDER.forEach((f,i)=>{
+    const wrap=document.createElement('label'); wrap.className='chk';
+    wrap.innerHTML='<input type="checkbox" value="'+f+'" '+(i<6?'checked':'')+'><span>'+FIELD_LABELS[f]+'</span>';
+    basicFieldsBox.appendChild(wrap);
+  });
+  let basicRows=[];
+  $('basicGenBtn').addEventListener('click', ()=>{
+    const count=Math.max(1,Math.min(200, parseInt($('basicCount').value,10)||1));
+    const fields=[...basicFieldsBox.querySelectorAll('input:checked')].map(i=>i.value);
+    if(!fields.length){ toast('请至少选择一个字段'); return; }
+    const ageMin=parseInt($('idAgeMin').value,10)||18, ageMax=parseInt($('idAgeMax').value,10)||55;
+    basicRows=[];
+    for(let i=1;i<=count;i++){ basicRows.push(buildRow(fields, ageMin, ageMax, i)); }
+    renderTable(basicRows,'basicResultWrap');
+    $('basicCountChip').textContent=count+' 条';
+    bumpGen(count);
+  });
+  $('basicCopyCsv').addEventListener('click', ()=>{ if(!basicRows.length){toast('先生成数据');return;} copyText(toCSV(basicRows)); });
+  $('basicCopyJson').addEventListener('click', ()=>{ if(!basicRows.length){toast('先生成数据');return;} copyText(JSON.stringify(basicRows,null,2)); });
+
+  /* ================= 2. batch accounts ================= */
+  const BATCH_FIELD_ORDER=['username','password','phone','email','nickname','registerTime'];
+  const BATCH_LABELS={username:'用户名',password:'密码',phone:'手机号',email:'邮箱',nickname:'昵称',registerTime:'注册时间'};
+  Object.assign(FIELD_LABELS, BATCH_LABELS);
+  const batchFieldsBox=$('batchFields');
+  BATCH_FIELD_ORDER.forEach(f=>{
+    const wrap=document.createElement('label'); wrap.className='chk';
+    wrap.innerHTML='<input type="checkbox" value="'+f+'" checked><span>'+BATCH_LABELS[f]+'</span>';
+    batchFieldsBox.appendChild(wrap);
+  });
+  function genPassword(len, withSymbol){
+    const lower='abcdefghijklmnopqrstuvwxyz', upper=lower.toUpperCase(), digits='0123456789', sym='!@#$%^&*';
+    let pool=lower+upper+digits+(withSymbol?sym:'');
+    let pwd=lower[randInt(0,25)]+upper[randInt(0,25)]+digits[randInt(0,9)]+(withSymbol?sym[randInt(0,sym.length-1)]:digits[randInt(0,9)]);
+    for(let i=pwd.length;i<len;i++) pwd+=pool[randInt(0,pool.length-1)];
+    return pwd.split('').sort(()=>Math.random()-0.5).join('').slice(0,len);
+  }
+  let batchRows=[];
+  $('batchGenBtn').addEventListener('click', ()=>{
+    const count=Math.max(1,Math.min(500, parseInt($('batchCount').value,10)||1));
+    const prefix=$('batchPrefix').value.trim()||'user';
+    const start=parseInt($('batchStart').value,10)||0;
+    const pwdLen=Math.max(6,Math.min(32,parseInt($('batchPwdLen').value,10)||10));
+    const withSymbol=$('batchPwdSymbol').checked;
+    const fields=[...batchFieldsBox.querySelectorAll('input:checked')].map(i=>i.value);
+    if(!fields.length){ toast('请至少选择一个字段'); return; }
+    batchRows=[];
+    for(let i=0;i<count;i++){
+      const seq=start+i;
+      const full={
+        username: prefix+'_'+pad(seq,5),
+        password: genPassword(pwdLen, withSymbol),
+        phone: genPhone(),
+        email: genEmail(),
+        nickname: genName()+randInt(10,99),
+        registerTime: new Date(Date.now()-randInt(0,3600*24*90*1000)).toISOString().replace('T',' ').slice(0,19)
+      };
+      const row={}; fields.forEach(f=>row[f]=full[f]);
+      batchRows.push(row);
+    }
+    renderTable(batchRows,'batchResultWrap');
+    $('batchCountChip').textContent=count+' 条';
+    bumpGen(count);
+  });
+  $('batchCopyCsv').addEventListener('click', ()=>{ if(!batchRows.length){toast('先生成数据');return;} copyText(toCSV(batchRows)); });
+  $('batchCopyJson').addEventListener('click', ()=>{ if(!batchRows.length){toast('先生成数据');return;} copyText(JSON.stringify(batchRows,null,2)); });
+
+  /* ================= 3. API injection ================= */
+  const headersBox=$('apiHeaders');
+  function addHeaderRow(k,v){
+    const row=document.createElement('div'); row.className='kv-row';
+    row.innerHTML='<input type="text" placeholder="Header 名" class="hk" value="'+(k||'')+'">'+
+      '<input type="text" placeholder="Header 值" class="hv" value="'+(v||'')+'">'+
+      '<button class="icon-btn hdel" type="button">×</button>';
+    row.querySelector('.hdel').addEventListener('click', ()=>row.remove());
+    headersBox.appendChild(row);
+  }
+  addHeaderRow('Content-Type','application/json');
+  $('apiAddHeader').addEventListener('click', ()=>addHeaderRow());
+
+  function fillTemplate(str, data){
+    return str.replace(/\{\{(\w+)\}\}/g, (m,key)=> (data[key]!==undefined? data[key] : m));
+  }
+  function logLine(index,total,ok,detail,ms){
+    const panel=$('apiLog');
+    if(panel.querySelector('.log-empty')) panel.innerHTML='';
+    const line=document.createElement('div'); line.className='log-line';
+    line.innerHTML='<span class="log-idx">#'+index+'</span>'+
+      '<span class="log-status '+(ok?'ok':'bad')+'">'+(ok?'OK':'FAIL')+'</span>'+
+      '<span class="log-detail">'+detail+'</span>'+
+      '<span class="log-time">'+ms+'ms</span>';
+    panel.insertBefore(line, panel.firstChild);
+  }
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+  let apiStop=false;
+  $('apiStopBtn').addEventListener('click', ()=>{ apiStop=true; });
+
+  $('apiSendBtn').addEventListener('click', async ()=>{
+    const url=$('apiUrl').value.trim();
+    if(!url){ toast('请填写接口地址'); return; }
+    const method=$('apiMethod').value;
+    const loop=Math.max(1,Math.min(200, parseInt($('apiLoop').value,10)||1));
+    const interval=Math.max(0, parseInt($('apiInterval').value,10)||0);
+    const bodyTpl=$('apiBody').value;
+    const headerRows=[...headersBox.querySelectorAll('.kv-row')].map(r=>({
+      k:r.querySelector('.hk').value.trim(), v:r.querySelector('.hv').value.trim()
+    })).filter(h=>h.k);
+    apiStop=false;
+    let done=0;
+    $('apiLogCount').textContent='0 / '+loop+' 次请求';
+    for(let i=1;i<=loop;i++){
+      if(apiStop){ logLine(i,loop,false,'已手动停止',0); break; }
+      const data=buildRow(null,18,55,i);
+      const finalUrl=fillTemplate(url,data);
+      let finalBody=undefined;
+      const headers={};
+      headerRows.forEach(h=>headers[h.k]=fillTemplate(h.v,data));
+      if(method!=='GET' && method!=='DELETE'){ finalBody=fillTemplate(bodyTpl,data); }
+      const t0=performance.now();
+      const useProxy=$('apiUseProxy').checked;
+      try{
+        if(useProxy){
+          const cfg=getDbConfig();
+          if(!cfg.baseUrl){ throw new Error('请先在「数据库操作」页配置后端地址'); }
+          const resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/api/proxy', {
+            method:'POST',
+            headers:{'Content-Type':'application/json', 'x-api-token':cfg.token||''},
+            body: JSON.stringify({ url: finalUrl, method, headers, body: finalBody })
+          });
+          const j=await resp.json();
+          const ms=Math.round(performance.now()-t0);
+          logLine(i,loop, resp.ok && j.ok, '[代理] '+method+' '+(j.status||resp.status)+' '+(j.error||''), ms);
+        } else {
+          const resp=await fetch(finalUrl,{ method, headers, body: finalBody });
+          const ms=Math.round(performance.now()-t0);
+          logLine(i,loop, resp.ok, method+' '+resp.status+' '+resp.statusText, ms);
+        }
+      }catch(err){
+        const ms=Math.round(performance.now()-t0);
+        logLine(i,loop,false,'请求异常: '+err.message+(useProxy?'':'（可能是跨域 CORS 限制，可尝试勾选"通过后端代理转发"）'),ms);
+      }
+      done++;
+      bumpApi(1);
+      $('apiLogCount').textContent=done+' / '+loop+' 次请求';
+      if(interval>0 && i<loop) await sleep(interval);
+    }
+  });
+
+  /* presets */
+  function loadPresets(){
+    try{ return JSON.parse(localStorage.getItem('toolbox_api_presets')||'[]'); }catch(e){ return []; }
+  }
+  function savePresets(list){ try{ localStorage.setItem('toolbox_api_presets', JSON.stringify(list)); }catch(e){} }
+  function refreshPresetSelect(){
+    const sel=$('apiPresetSelect'); const list=loadPresets();
+    sel.innerHTML='<option value="">— 我的预设 —</option>'+list.map((p,i)=>'<option value="'+i+'">'+p.name+'</option>').join('');
+  }
+  refreshPresetSelect();
+  $('apiSavePreset').addEventListener('click', ()=>{
+    const name=$('apiPresetName').value.trim();
+    if(!name){ toast('请输入预设名称'); return; }
+    const list=loadPresets();
+    list.push({
+      name, method:$('apiMethod').value, url:$('apiUrl').value, body:$('apiBody').value,
+      headers:[...headersBox.querySelectorAll('.kv-row')].map(r=>({k:r.querySelector('.hk').value,v:r.querySelector('.hv').value}))
+    });
+    savePresets(list); refreshPresetSelect(); toast('已保存预设');
+  });
+  $('apiLoadPreset').addEventListener('click', ()=>{
+    const idx=$('apiPresetSelect').value; if(idx===''){ toast('请选择预设'); return; }
+    const p=loadPresets()[idx]; if(!p) return;
+    $('apiMethod').value=p.method; $('apiUrl').value=p.url; $('apiBody').value=p.body;
+    headersBox.innerHTML=''; (p.headers||[]).forEach(h=>addHeaderRow(h.k,h.v));
+    toast('已加载预设「'+p.name+'」');
+  });
+  $('apiDeletePreset').addEventListener('click', ()=>{
+    const idx=$('apiPresetSelect').value; if(idx===''){ toast('请选择预设'); return; }
+    const list=loadPresets(); list.splice(idx,1); savePresets(list); refreshPresetSelect(); toast('已删除');
+  });
+
+  /* ================= 4. convert / cipher ================= */
+  document.querySelectorAll('.tool-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('.tool-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.subview').forEach(v=>v.classList.remove('active'));
+      $('sub-'+tab.dataset.sub).classList.add('active');
+    });
+  });
+
+  $('jsonFormat').addEventListener('click', ()=>{
+    const out=$('jsonOut');
+    try{ const obj=JSON.parse($('jsonIn').value); out.textContent=JSON.stringify(obj,null,2); out.classList.remove('error'); }
+    catch(e){ out.textContent='解析失败：'+e.message; out.classList.add('error'); }
+  });
+  $('jsonMinify').addEventListener('click', ()=>{
+    const out=$('jsonOut');
+    try{ const obj=JSON.parse($('jsonIn').value); out.textContent=JSON.stringify(obj); out.classList.remove('error'); }
+    catch(e){ out.textContent='解析失败：'+e.message; out.classList.add('error'); }
+  });
+  $('jsonCopy').addEventListener('click', ()=>copyText($('jsonOut').textContent));
+
+  function utf8ToB64(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function b64ToUtf8(str){ return decodeURIComponent(escape(atob(str))); }
+  $('b64Encode').addEventListener('click', ()=>{
+    try{ $('b64Out').textContent=utf8ToB64($('b64In').value); $('b64Out').classList.remove('error'); }
+    catch(e){ $('b64Out').textContent='编码失败：'+e.message; $('b64Out').classList.add('error'); }
+  });
+  $('b64Decode').addEventListener('click', ()=>{
+    try{ $('b64Out').textContent=b64ToUtf8($('b64In').value); $('b64Out').classList.remove('error'); }
+    catch(e){ $('b64Out').textContent='解码失败，请确认输入是合法的 Base64'; $('b64Out').classList.add('error'); }
+  });
+  $('b64Copy').addEventListener('click', ()=>copyText($('b64Out').textContent));
+
+  $('urlEncode').addEventListener('click', ()=>{ $('urlOut').textContent=encodeURIComponent($('urlIn').value); $('urlOut').classList.remove('error'); });
+  $('urlDecode').addEventListener('click', ()=>{
+    try{ $('urlOut').textContent=decodeURIComponent($('urlIn').value); $('urlOut').classList.remove('error'); }
+    catch(e){ $('urlOut').textContent='解码失败：'+e.message; $('urlOut').classList.add('error'); }
+  });
+  $('urlCopy').addEventListener('click', ()=>copyText($('urlOut').textContent));
+
+  function fmtDate(d){
+    return d.getFullYear()+'-'+pad(d.getMonth()+1,2)+'-'+pad(d.getDate(),2)+' '+pad(d.getHours(),2)+':'+pad(d.getMinutes(),2)+':'+pad(d.getSeconds(),2);
+  }
+  $('tsToDate').addEventListener('click', ()=>{
+    const raw=parseInt($('tsIn').value,10);
+    if(isNaN(raw)){ $('tsDateOut').textContent='请输入数字时间戳'; $('tsDateOut').classList.add('error'); return; }
+    const ms= $('tsUnit').value==='s' ? raw*1000 : raw;
+    $('tsDateOut').textContent=fmtDate(new Date(ms));
+    $('tsDateOut').classList.remove('error');
+  });
+  $('dateToTs').addEventListener('click', ()=>{
+    const v=$('dateIn').value.trim().replace(' ','T');
+    const d=new Date(v);
+    if(isNaN(d.getTime())){ $('dateTsOut').textContent='日期格式无法解析，示例：2026-09-10 12:00:00'; $('dateTsOut').classList.add('error'); return; }
+    $('dateTsOut').textContent='秒: '+Math.floor(d.getTime()/1000)+'\n毫秒: '+d.getTime();
+    $('dateTsOut').classList.remove('error');
+  });
+  $('tsNow').addEventListener('click', ()=>{
+    const now=new Date();
+    $('tsIn').value=Math.floor(now.getTime()/1000); $('tsUnit').value='s';
+    $('dateIn').value=fmtDate(now);
+  });
+
+  $('hashMd5').addEventListener('click', ()=>{ $('hashOut').textContent=CryptoJS.MD5($('hashIn').value).toString(); });
+  $('hashSha1').addEventListener('click', ()=>{ $('hashOut').textContent=CryptoJS.SHA1($('hashIn').value).toString(); });
+  $('hashSha256').addEventListener('click', ()=>{ $('hashOut').textContent=CryptoJS.SHA256($('hashIn').value).toString(); });
+
+  $('aesEnc').addEventListener('click', ()=>{
+    try{ $('aesOut').textContent=CryptoJS.AES.encrypt($('aesIn').value, $('aesKey').value).toString(); $('aesOut').classList.remove('error'); }
+    catch(e){ $('aesOut').textContent='加密失败：'+e.message; $('aesOut').classList.add('error'); }
+  });
+  $('aesDec').addEventListener('click', ()=>{
+    try{
+      const bytes=CryptoJS.AES.decrypt($('aesIn').value, $('aesKey').value);
+      const text=bytes.toString(CryptoJS.enc.Utf8);
+      if(!text) throw new Error('密钥错误或内容不是有效密文');
+      $('aesOut').textContent=text; $('aesOut').classList.remove('error');
+    }catch(e){ $('aesOut').textContent='解密失败：'+e.message; $('aesOut').classList.add('error'); }
+  });
+  $('aesCopy').addEventListener('click', ()=>copyText($('aesOut').textContent));
+
+  $('uuidGen').addEventListener('click', ()=>{
+    const n=Math.max(1,Math.min(100, parseInt($('uuidCount').value,10)||1));
+    const list=[]; for(let i=0;i<n;i++) list.push(genUUID());
+    $('uuidOut').textContent=list.join('\n');
+  });
+
+  /* ================= 5. database / backend proxy ================= */
+  function getDbConfig(){
+    let cfg={baseUrl:'',token:''};
+    try{ cfg=JSON.parse(localStorage.getItem('toolbox_db_config')||'{}'); }catch(e){}
+    return {baseUrl:cfg.baseUrl||'', token:cfg.token||''};
+  }
+  function setDbConfig(baseUrl, token){
+    try{ localStorage.setItem('toolbox_db_config', JSON.stringify({baseUrl,token})); }catch(e){}
+  }
+  (function initDbConfig(){
+    const cfg=getDbConfig();
+    $('dbBaseUrl').value=cfg.baseUrl; $('dbToken').value=cfg.token;
+  })();
+  $('dbSaveConfig').addEventListener('click', ()=>{
+    setDbConfig($('dbBaseUrl').value.trim(), $('dbToken').value.trim());
+    toast('已保存后端配置');
+  });
+  function setConnPill(state,text){
+    const p=$('dbConnStatus'); p.className='pill '+state; p.textContent=text;
+  }
+  $('dbTestConn').addEventListener('click', async ()=>{
+    const base=$('dbBaseUrl').value.trim().replace(/\/$/,'');
+    if(!base){ toast('请先填写后端地址'); return; }
+    setConnPill('pending','测试中…');
+    try{
+      const resp=await fetch(base+'/api/health');
+      if(resp.ok){ setConnPill('ok','连接成功'); } else { setConnPill('bad','状态码 '+resp.status); }
+    }catch(err){ setConnPill('bad','无法连接: '+err.message); }
+  });
+
+  document.querySelectorAll('#dbTabs .tool-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      document.querySelectorAll('#dbTabs .tool-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      $('sub-sql').classList.remove('active'); $('sub-insert').classList.remove('active');
+      $('sub-'+tab.dataset.sub).classList.add('active');
+    });
+  });
+
+  $('sqlRun').addEventListener('click', async ()=>{
+    const cfg=getDbConfig();
+    if(!cfg.baseUrl){ toast('请先配置并保存后端地址'); return; }
+    let params=[];
+    try{ params=JSON.parse($('sqlParams').value||'[]'); if(!Array.isArray(params)) throw new Error('参数需为数组'); }
+    catch(e){ $('sqlOut').textContent='参数解析失败：'+e.message; $('sqlOut').classList.add('error'); return; }
+    $('sqlOut').textContent='执行中…'; $('sqlOut').classList.remove('error');
+    try{
+      const resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/api/query', {
+        method:'POST', headers:{'Content-Type':'application/json','x-api-token':cfg.token||''},
+        body: JSON.stringify({ sql: $('sqlIn').value, params })
+      });
+      const j=await resp.json();
+      if(!resp.ok || j.ok===false){ $('sqlOut').textContent='执行失败：'+(j.error||resp.statusText); $('sqlOut').classList.add('error'); return; }
+      $('sqlOut').textContent='影响/返回行数: '+j.rowCount+'\n\n'+JSON.stringify(j.rows,null,2);
+      $('sqlOut').classList.remove('error');
+    }catch(err){ $('sqlOut').textContent='请求异常：'+err.message; $('sqlOut').classList.add('error'); }
+  });
+  $('sqlCopy').addEventListener('click', ()=>copyText($('sqlOut').textContent));
+
+  const INS_FIELD_OPTIONS=['name','phone','idcard','gender','age','birth','email','address','bankcard','company','uuid','timestamp','index'];
+  function addMapRow(col, field){
+    const row=document.createElement('div'); row.className='map-row';
+    row.innerHTML='<input type="text" placeholder="数据库列名，如 name" class="mk" value="'+(col||'')+'">'+
+      '<select class="mf">'+INS_FIELD_OPTIONS.map(f=>'<option value="'+f+'" '+(f===field?'selected':'')+'>'+FIELD_LABELS[f]+'</option>').join('')+'</select>'+
+      '<input type="text" placeholder="(可选) 固定前缀/后缀" class="mextra">'+
+      '<button class="icon-btn mdel" type="button">×</button>';
+    row.querySelector('.mdel').addEventListener('click', ()=>row.remove());
+    $('insMapRows').appendChild(row);
+  }
+  addMapRow('name','name'); addMapRow('phone','phone'); addMapRow('email','email');
+  $('insAddMap').addEventListener('click', ()=>addMapRow());
+
+  $('insRun').addEventListener('click', async ()=>{
+    const cfg=getDbConfig();
+    if(!cfg.baseUrl){ toast('请先配置并保存后端地址'); return; }
+    const table=$('insTable').value.trim();
+    if(!table){ toast('请填写表名'); return; }
+    const count=Math.max(1,Math.min(500, parseInt($('insCount').value,10)||1));
+    const maps=[...$('insMapRows').querySelectorAll('.map-row')].map(r=>({
+      col:r.querySelector('.mk').value.trim(), field:r.querySelector('.mf').value, extra:r.querySelector('.mextra').value
+    })).filter(m=>m.col);
+    if(!maps.length){ toast('请至少添加一个字段映射'); return; }
+    const rows=[];
+    for(let i=1;i<=count;i++){
+      const data=buildRow(null,18,55,i);
+      const row={};
+      maps.forEach(m=>{ row[m.col]=(m.extra||'')+String(data[m.field]!==undefined?data[m.field]:''); });
+      rows.push(row);
+    }
+    $('insOut').textContent='插入中…'; $('insOut').classList.remove('error');
+    try{
+      const resp=await fetch(cfg.baseUrl.replace(/\/$/,'')+'/api/insert', {
+        method:'POST', headers:{'Content-Type':'application/json','x-api-token':cfg.token||''},
+        body: JSON.stringify({ table, rows })
+      });
+      const j=await resp.json();
+      if(!resp.ok || j.ok===false){ $('insOut').textContent='插入失败：'+(j.error||resp.statusText); $('insOut').classList.add('error'); return; }
+      $('insOut').textContent='成功插入 '+j.count+' 条\n\n'+JSON.stringify(j.rows,null,2);
+      $('insOut').classList.remove('error');
+      bumpGen(j.count);
+    }catch(err){ $('insOut').textContent='请求异常：'+err.message; $('insOut').classList.add('error'); }
+  });
+
+})();
+</script>
+
+
+<script>
+(function(){
+  var GATE_HASH = "68d3aa1fbe303526d054776ac9c6e73881ccfc62be622dc6c2c8fcdfe21f5528";
+  var appEl;
+  function unlock(){
+    document.getElementById("gateOverlay").style.display = "none";
+    appEl = document.querySelector(".app");
+    appEl.classList.add("unlocked");
+  }
+  try{
+    if(sessionStorage.getItem("toolbox_unlocked") === "1"){ unlock(); return; }
+  }catch(e){}
+  function tryEnter(){
+    var val = document.getElementById("gatePass").value;
+    var hash = CryptoJS.SHA256(val).toString();
+    if(hash === GATE_HASH){
+      try{ sessionStorage.setItem("toolbox_unlocked","1"); }catch(e){}
+      unlock();
+    } else {
+      document.getElementById("gateError").textContent = "口令不正确";
+    }
+  }
+  document.getElementById("gateBtn").addEventListener("click", tryEnter);
+  document.getElementById("gatePass").addEventListener("keydown", function(e){ if(e.key==="Enter") tryEnter(); });
+})();
+</script>
+
+</body>
+</html>
