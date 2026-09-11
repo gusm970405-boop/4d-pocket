@@ -285,34 +285,83 @@
 
 <style>
   #gateOverlay{
-    position:fixed;inset:0;z-index:999;background:var(--bg);
+    position:fixed;inset:0;z-index:999;
     display:flex;align-items:center;justify-content:center;padding:20px;
+    overflow:hidden;
+    background:var(--bg);
+    background:radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--accent) 20%, var(--bg)) 0%, var(--bg) 60%);
   }
+  #gateOverlay::before, #gateOverlay::after{
+    content:"";position:absolute;left:50%;top:50%;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent) 0%, transparent 70%);
+  }
+  #gateOverlay::before{ width:520px;height:520px; transform:translate(-50%,-50%); opacity:.45; animation:gate-pulse 7s ease-in-out infinite; }
+  #gateOverlay::after{ width:780px;height:780px; transform:translate(-50%,-50%); opacity:.2; animation:gate-pulse 9s ease-in-out infinite reverse; }
+  @keyframes gate-pulse{ 0%,100%{ transform:translate(-50%,-50%) scale(1); } 50%{ transform:translate(-50%,-50%) scale(1.08); } }
+
+  .gate-spark{ position:absolute; border-radius:50%; background:var(--accent); opacity:.55; pointer-events:none; animation:gate-float 6s ease-in-out infinite; }
+  @keyframes gate-float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-16px); } }
+
   #gateCard{
-    background:var(--surface);border:1px solid var(--border);border-radius:14px;
-    padding:32px 30px;width:100%;max-width:340px;text-align:center;
+    position:relative; z-index:1;
+    background:var(--surface);
+    background:color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+    border:1px solid var(--border);
+    border:1px solid color-mix(in srgb, var(--accent) 22%, var(--border));
+    border-radius:20px;
+    padding:38px 34px 30px;width:100%;max-width:360px;text-align:center;
+    box-shadow:0 24px 60px -20px color-mix(in srgb, var(--accent) 35%, transparent), 0 2px 8px rgba(0,0,0,.06);
   }
-  #gateCard .brand-mark{margin:0 auto 14px;}
-  #gateCard h2{margin:0 0 6px;font-size:17px;font-weight:700;}
-  #gateCard p{margin:0 0 18px;font-size:12.5px;color:var(--text-dim);}
-  #gateCard input{margin-bottom:12px;text-align:center;letter-spacing:.05em;}
-  #gateCard button{width:100%;}
-  #gateError{color:var(--danger);font-size:12px;min-height:16px;margin-top:8px;}
+  .gate-eyebrow{
+    text-transform:uppercase;letter-spacing:.14em;font-size:10.5px;font-weight:700;
+    color:var(--accent); margin:0 0 16px;
+  }
+  .gate-badge{
+    width:58px;height:58px;margin:0 auto 18px;border-radius:18px;position:relative;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent);
+    background:linear-gradient(155deg, var(--accent), color-mix(in srgb, var(--accent) 45%, #22d3ee));
+    color:var(--accent-ink); font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:24px;
+    box-shadow:0 10px 24px -8px color-mix(in srgb, var(--accent) 70%, transparent), inset 0 1px 0 rgba(255,255,255,.25);
+  }
+  .gate-badge::after{
+    content:"";position:absolute;inset:-6px;border-radius:22px;
+    border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    animation:gate-ring 3.6s ease-in-out infinite;
+  }
+  @keyframes gate-ring{ 0%,100%{ opacity:.5; transform:scale(1); } 50%{ opacity:0; transform:scale(1.15); } }
+  #gateCard h2{margin:0 0 8px;font-size:21px;font-weight:700;letter-spacing:.01em;}
+  .gate-tagline{margin:0 0 24px;font-size:13px;color:var(--text-dim);line-height:1.6;}
+  #gateCard input{margin-bottom:12px;text-align:center;letter-spacing:.08em;padding:11px 12px;border-radius:10px;}
+  #gateCard button{width:100%;padding:11px 16px;border-radius:10px;font-size:13.5px;}
+  #gateError{color:var(--danger);font-size:12px;min-height:16px;margin-top:10px;}
+  .gate-foot{margin:20px 0 0;font-size:11px;color:var(--text-dim);opacity:.75;}
   .app{display:none;}
   .app.unlocked{display:grid;}
+  @media (prefers-reduced-motion:reduce){
+    #gateOverlay::before,#gateOverlay::after,.gate-badge::after,.gate-spark{animation:none;}
+  }
 </style>
 
 </head>
 <body>
 
 <div id="gateOverlay">
+  <span class="gate-spark" style="width:5px;height:5px;top:22%;left:16%;animation-duration:5s;"></span>
+  <span class="gate-spark" style="width:3px;height:3px;top:70%;left:24%;animation-duration:6.4s;animation-delay:.6s;"></span>
+  <span class="gate-spark" style="width:4px;height:4px;top:30%;left:83%;animation-duration:5.8s;animation-delay:1.1s;"></span>
+  <span class="gate-spark" style="width:3px;height:3px;top:76%;left:79%;animation-duration:7s;animation-delay:.3s;"></span>
+  <span class="gate-spark" style="width:2px;height:2px;top:14%;left:63%;animation-duration:4.6s;animation-delay:1.6s;"></span>
   <div id="gateCard">
-    <div class="brand-mark" style="width:40px;height:40px;font-size:18px;">四</div>
+    <p class="gate-eyebrow">4th-Dimensional Toolkit</p>
+    <div class="gate-badge">四</div>
     <h2>四次元口袋</h2>
-    <p>内部工具，请输入访问口令</p>
+    <p class="gate-tagline">测试同学专属百宝袋<br>掏出你现在需要的任何数据</p>
     <input type="password" id="gatePass" placeholder="访问口令" autocomplete="off">
     <button class="btn" id="gateBtn">进入</button>
     <div id="gateError"></div>
+    <p class="gate-foot">内部工具 · 仅限团队使用</p>
   </div>
 </div>
 
