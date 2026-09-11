@@ -1279,7 +1279,15 @@
 
 <script>
 (function(){
-  var GATE_HASH = "68d3aa1fbe303526d054776ac9c6e73881ccfc62be622dc6c2c8fcdfe21f5528";
+  var GATE_HASHES = [
+    "68d3aa1fbe303526d054776ac9c6e73881ccfc62be622dc6c2c8fcdfe21f5528", // zaoshu2026
+    "44de3ed43a38bbf73a9e4d5ea79f0b06ab29f5d003984a335cd3f79781c04e51", // doraemon
+    "dec0891c5b060b8711a336a15866626825885cdf376c89520e774f8878eebf97", // nobita
+    "cc3dd2074804f6ac2c0572a6a2c908c7e509afcd106fbb5aafbd4cd68f0746c8", // shizuka
+    "1dd060fb034399fe06e0fdf62a13de2eb3065f5da931fa7b58bd3faf4f15e87f", // gian
+    "7bba1a2b42a4312833c7c7242468db510fc68454da39869ecc3a8d76f0e14ee2", // suneo
+    "553998532ac04b3c71f0ce8780b87cd2ff5ae7ee4b8b5451a419ad099ea3048b"  // dorami
+  ];
   var appEl;
   function unlock(){
     document.getElementById("gateOverlay").style.display = "none";
@@ -1291,8 +1299,8 @@
   }catch(e){}
   function tryEnter(){
     var val = document.getElementById("gatePass").value;
-    var hash = CryptoJS.SHA256(val).toString();
-    if(hash === GATE_HASH){
+    var hash = CryptoJS.SHA256(val.trim().toLowerCase()).toString();
+    if(GATE_HASHES.indexOf(hash) !== -1){
       try{ sessionStorage.setItem("toolbox_unlocked","1"); }catch(e){}
       unlock();
     } else {
