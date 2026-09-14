@@ -435,7 +435,10 @@
               <input type="number" id="idAgeMax" value="55" min="0" max="99">
             </div>
           </div>
-          <button class="btn" id="basicGenBtn" style="width:100%;margin-top:6px;">生成数据</button>
+          <div class="btn-row" style="margin-top:6px;">
+            <button class="btn" id="basicGenBtn" style="flex:1;">生成数据</button>
+            <button class="btn secondary" id="basicResetBtn">重置</button>
+          </div>
         </div>
         <div>
           <div class="results-head">
@@ -486,7 +489,10 @@
             <label>包含字段</label>
             <div class="checks" id="batchFields"></div>
           </div>
-          <button class="btn" id="batchGenBtn" style="width:100%;margin-top:6px;">生成数据</button>
+          <div class="btn-row" style="margin-top:6px;">
+            <button class="btn" id="batchGenBtn" style="flex:1;">生成数据</button>
+            <button class="btn secondary" id="batchResetBtn">重置</button>
+          </div>
         </div>
         <div>
           <div class="results-head">
@@ -921,6 +927,12 @@
   });
   $('basicCopyCsv').addEventListener('click', ()=>{ if(!basicRows.length){toast('先生成数据');return;} copyText(toCSV(basicRows)); });
   $('basicCopyJson').addEventListener('click', ()=>{ if(!basicRows.length){toast('先生成数据');return;} copyText(JSON.stringify(basicRows,null,2)); });
+  $('basicResetBtn').addEventListener('click', ()=>{
+    basicRows=[];
+    $('basicResultWrap').innerHTML='<div class="empty-state">还没有数据，设置字段后点击「生成数据」</div>';
+    $('basicCountChip').textContent='0 条';
+    toast('已重置');
+  });
 
   /* ================= 2. batch accounts ================= */
   const BATCH_FIELD_ORDER=['username','password','phone','email','nickname','registerTime'];
@@ -968,6 +980,12 @@
   });
   $('batchCopyCsv').addEventListener('click', ()=>{ if(!batchRows.length){toast('先生成数据');return;} copyText(toCSV(batchRows)); });
   $('batchCopyJson').addEventListener('click', ()=>{ if(!batchRows.length){toast('先生成数据');return;} copyText(JSON.stringify(batchRows,null,2)); });
+  $('batchResetBtn').addEventListener('click', ()=>{
+    batchRows=[];
+    $('batchResultWrap').innerHTML='<div class="empty-state">设置规则后点击「生成数据」</div>';
+    $('batchCountChip').textContent='0 条';
+    toast('已重置');
+  });
 
   /* ================= 3. API injection ================= */
   const headersBox=$('apiHeaders');
